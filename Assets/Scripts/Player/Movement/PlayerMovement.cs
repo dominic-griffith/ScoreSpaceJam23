@@ -8,11 +8,11 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Movement")]
     [SerializeField] private Transform _orientation;
-    [SerializeField] private float _walkSpeed = 70f;
-    [SerializeField] private float _sprintSpeed = 100f;
+    [SerializeField] private float _walkSpeed = 7f;
+    [SerializeField] private float _sprintSpeed = 10f;
     [SerializeField] private float _drag = 5f;
     [Header("Crouching")]
-    [SerializeField] private float _crouchSpeed = 35f;
+    [SerializeField] private float _crouchSpeed = 3.5f;
     [SerializeField] private float _crouchYScale = 0.5f;
     [Header("Ground Check")]
     [SerializeField] private float _playerHeight = 2f;
@@ -23,25 +23,42 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _airMultiplier = 0.4f;
     [Header("Slope Check")]
     [SerializeField] private float _maxSlopeAngle = 45f;
+    [Header("Swinging")]
+    [SerializeField] private LineRenderer _lr;
+    [SerializeField] private Transform _gunTip, _cam, _player, _predictionPoint;
+    [SerializeField] private LayerMask _swingMask;
+    [SerializeField] private float _maxSwingDistance = 25f;
+    [SerializeField] private float _swingSpeed = 15f;
+    [SerializeField] private float _horizontalThrustForce = 2000f;
+    [SerializeField] private float _forwardThrustForce = 3000f;
+    [SerializeField] private float _extendCableSpeed = 20f;
+    [SerializeField] private float _predictionSphereCastRadius = 1f;
 
     private float _horizontalInput;
     private float _verticalInput;
     private float _moveSpeed;
     private float _startYScale;
+    
+    private RaycastHit _predictionHit;
     private RaycastHit _slopeHit;
     private Vector3 _moveDirection;
+    private Vector3 _swingPoint;
+    private Vector3 _currentSwingPosition;
+    private SpringJoint _joint;
     private Rigidbody _rb;
     private bool _isGrounded;
     private bool _canJump;
     private bool _sprinting;
     private bool _jumping;
     private bool _crouching;
+    private bool _swinging;
     private bool _exitSlope;
 
     public enum MovementState
     {
         walking,
         sprinting,
+        swinging,
         crouching,
         air
     }
@@ -58,6 +75,8 @@ public class PlayerMovement : MonoBehaviour
     {
         GroundCheck();
         GetInput();
+        CheckForSwingPoints();
+        if (_joint != null) SwingThrustMovement();
         SpeedControl();
         StateHandler();
         HandleDrag();
@@ -65,7 +84,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        UpdatePosition();
+        MovePlayer();
+    }
+
+    private void LateUpdate()
+    {
+        DrawRope();
     }
 
     private void GroundCheck()
@@ -95,31 +119,39 @@ public class PlayerMovement : MonoBehaviour
             Jump();
             Invoke(nameof(ResetJump), _jumpCooldown);
         }
-        if(Input.GetButtonDown("Crouch"))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, _crouchYScale, transform.localScale.z);
-            _rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-        }
-        if(Input.GetButtonUp("Crouch"))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, _startYScale, transform.localScale.z);
-        }
+        if (Input.GetButtonDown("Crouch")) StartCrouch();
+        if (Input.GetButtonUp("Crouch")) StopCrouch();
+        if (Input.GetButtonDown("Swing")) StartSwing();
+        if (Input.GetButtonUp("Swing")) StopSwing();
     }
 
-    private void UpdatePosition()
+    private void StartCrouch()
     {
+        transform.localScale = new Vector3(transform.localScale.x, _crouchYScale, transform.localScale.z);
+        _rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+    }
+
+    private void StopCrouch()
+    {
+        transform.localScale = new Vector3(transform.localScale.x, _startYScale, transform.localScale.z);
+    }
+
+    private void MovePlayer()
+    {
+        if (_swinging) return;
+
         _moveDirection = _orientation.forward * _verticalInput + _orientation.right * _horizontalInput;
 
         if(OnSlope() && !_exitSlope)
         {
-            _rb.AddForce(GetSlopeMoveDirection() * _moveSpeed, ForceMode.Force);
+            _rb.AddForce(GetSlopeMoveDirection() * _moveSpeed * 20f, ForceMode.Force);
             if (_rb.velocity.y > 0)
-                _rb.AddForce(Vector3.down * 20f, ForceMode.Force);
+                _rb.AddForce(Vector3.down * 80f, ForceMode.Force);
         } 
         else if(_isGrounded)
-            _rb.AddForce(_moveDirection * _moveSpeed, ForceMode.Force);
+            _rb.AddForce(_moveDirection.normalized * _moveSpeed * 10f, ForceMode.Force);
         else
-            _rb.AddForce(_moveDirection * _moveSpeed * _airMultiplier, ForceMode.Force);
+            _rb.AddForce(_moveDirection.normalized * _moveSpeed * 10f * _airMultiplier, ForceMode.Force);
 
         _rb.useGravity = !OnSlope();
     }
@@ -139,7 +171,9 @@ public class PlayerMovement : MonoBehaviour
                 Vector3 limitedVelocity = flatVelocity.normalized * _moveSpeed;
                 _rb.velocity = new Vector3(limitedVelocity.x, _rb.velocity.y, limitedVelocity.z);
             }
+            Debug.Log(flatVelocity.magnitude);
         }
+        
         
     }
 
@@ -158,7 +192,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void StateHandler()
     {
-        if(_crouching)
+        if(_swinging)
+        {
+            State = MovementState.swinging;
+            _moveSpeed = _swingSpeed;
+        }
+        else if(_crouching)
         {
             State = MovementState.crouching;
             _moveSpeed = _crouchSpeed;
@@ -193,5 +232,93 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 GetSlopeMoveDirection()
     {
         return Vector3.ProjectOnPlane(_moveDirection, _slopeHit.normal).normalized;
+    }
+
+    private void StartSwing()
+    {
+        if (_predictionHit.point == Vector3.zero) return;
+
+        _swinging = true;
+
+        _swingPoint = _predictionHit.point;
+        _joint = _player.gameObject.AddComponent<SpringJoint>();
+        _joint.autoConfigureConnectedAnchor = false;
+        _joint.connectedAnchor = _swingPoint;
+
+        float distanceFromPoint = Vector3.Distance(_player.position, _swingPoint);
+
+        _joint.maxDistance = distanceFromPoint * 0.8f;
+        _joint.minDistance = distanceFromPoint * 0.25f;
+
+        _joint.spring = 4.5f;
+        _joint.damper = 7f;
+        _joint.massScale = 4.5f;
+
+        _lr.positionCount = 2;
+        _currentSwingPosition = _gunTip.position;
+    }
+
+    private void StopSwing()
+    {
+        _swinging = false;
+
+        _lr.positionCount = 0;
+        Destroy(_joint);
+    }
+
+    private void DrawRope()
+    {
+        if (!_joint) return;
+
+        _currentSwingPosition = Vector3.Lerp(_currentSwingPosition, _swingPoint, Time.deltaTime * 8f);
+
+        _lr.SetPosition(0, _gunTip.position);
+        _lr.SetPosition(1, _swingPoint);
+    }
+
+    private void SwingThrustMovement()
+    {
+        if(_horizontalInput != 0f)
+        {
+            if (_horizontalInput > 0f)
+                _rb.AddForce(_orientation.right * _horizontalThrustForce * Time.deltaTime);
+            else
+                _rb.AddForce(-_orientation.right * _horizontalThrustForce * Time.deltaTime);
+        }
+        if(_verticalInput > 0f)
+            _rb.AddForce(_orientation.forward * _horizontalThrustForce * Time.deltaTime);
+    }
+
+    private void CheckForSwingPoints()
+    {
+        if (_joint != null) return;
+
+        RaycastHit sphereCastHit;
+        Physics.SphereCast(_cam.position, _predictionSphereCastRadius, _cam.forward, out sphereCastHit, _maxSwingDistance, _swingMask);
+
+        RaycastHit raycastHit;
+        Physics.Raycast(_cam.position, _cam.forward, out raycastHit, _maxSwingDistance, _swingMask);
+
+        Vector3 realHitPoint;
+
+        if (raycastHit.point != Vector3.zero) // Option 1 - Direct Hit
+            realHitPoint = raycastHit.point;
+        else if (sphereCastHit.point != Vector3.zero) // Option 2 - Indirect (predicted) Hit
+            realHitPoint = sphereCastHit.point;
+        else // Option 3 - Miss
+            realHitPoint = Vector3.zero;
+
+
+        if (realHitPoint != Vector3.zero)
+        {
+            _predictionPoint.gameObject.SetActive(true);
+            _predictionPoint.position = realHitPoint;
+        }
+        else
+        {
+            _predictionPoint.gameObject.SetActive(false);
+        }
+
+        _predictionHit = raycastHit.point == Vector3.zero ? sphereCastHit : raycastHit;
     }
 }

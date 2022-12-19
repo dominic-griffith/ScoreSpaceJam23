@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5602773357981826696}
   m_Layer: 0
   m_Name: Orientation
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -45,7 +45,7 @@ GameObject:
   - component: {fileID: 5602773358690014974}
   m_Layer: 0
   m_Name: Body
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -143,7 +143,7 @@ GameObject:
   - component: {fileID: 5602773358701054063}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -226,8 +226,6 @@ MonoBehaviour:
   _maxSwingDistance: 25
   _swingSpeed: 15
   _horizontalThrustForce: 2000
-  _forwardThrustForce: 3000
-  _extendCableSpeed: 20
   _predictionSphereCastRadius: 1
 --- !u!120 &5602773358701054063
 LineRenderer:
@@ -339,7 +337,7 @@ GameObject:
   - component: {fileID: 5602773359052063094}
   m_Layer: 0
   m_Name: CameraPosition
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -430,6 +428,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlizzardParticles
       objectReference: {fileID: 0}
+    - target: {fileID: 4771286683577956525, guid: 41f0fccf6f1be314188cc4f88d59a25f, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 41f0fccf6f1be314188cc4f88d59a25f, type: 3}
 --- !u!4 &2314088364624104609 stripped
@@ -447,6 +449,10 @@ PrefabInstance:
     - target: {fileID: 6018414684417903441, guid: 0366a72b8ef82294fb09d48e771b83a0, type: 3}
       propertyPath: m_Name
       value: SnowParticles
+      objectReference: {fileID: 0}
+    - target: {fileID: 6018414684417903441, guid: 0366a72b8ef82294fb09d48e771b83a0, type: 3}
+      propertyPath: m_TagString
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 6018414684417903452, guid: 0366a72b8ef82294fb09d48e771b83a0, type: 3}
       propertyPath: m_RootOrder

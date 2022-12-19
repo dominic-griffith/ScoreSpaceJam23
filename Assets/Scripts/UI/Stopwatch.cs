@@ -33,6 +33,11 @@ public class Stopwatch : MonoBehaviour
         _currentTimeText.text = time.ToString(@"mm\:ss\:fff");
     }
 
+    public float GetCurrentTime()
+    {
+        return _currentTime;
+    }
+
     public void StartStopwatch()
     {
         _stopwatchActive = true;

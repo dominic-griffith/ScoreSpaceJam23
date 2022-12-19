@@ -15,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _crouchSpeed = 3.5f;
     [SerializeField] private float _crouchYScale = 0.5f;
     [Header("Ground Check")]
+    [SerializeField] private Timer _timer;
     [SerializeField] private float _playerHeight = 2f;
     [SerializeField] LayerMask _groundMask;
     [SerializeField] LayerMask _nonGroundMask;
@@ -31,8 +32,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _maxSwingDistance = 25f;
     [SerializeField] private float _swingSpeed = 15f;
     [SerializeField] private float _horizontalThrustForce = 2000f;
-    [SerializeField] private float _forwardThrustForce = 3000f;
-    [SerializeField] private float _extendCableSpeed = 20f;
     [SerializeField] private float _predictionSphereCastRadius = 1f;
 
     private float _horizontalInput;
@@ -55,6 +54,7 @@ public class PlayerMovement : MonoBehaviour
     private bool _crouching;
     private bool _swinging;
     private bool _exitSlope;
+    private bool _timerRestarted;
 
     public enum MovementState
     {
@@ -98,7 +98,29 @@ public class PlayerMovement : MonoBehaviour
     private void GroundCheck()
     {
         _isGrounded = Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.2f, _groundMask);
-        _isNotGround = Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.2f, _nonGroundMask);
+        _isNotGround = Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.5f, _nonGroundMask);
+
+        if(!_isGrounded && _isNotGround)
+        {
+            _timerRestarted = false;
+            StartCoroutine(DeplayTimer());
+        }
+        else
+        {
+            _timerRestarted = true;
+            _timer.ResetTimer();
+            _timer.StopTimer();
+        }
+    }
+
+    IEnumerator DeplayTimer()
+    {
+        
+        yield return new WaitForSecondsRealtime(0.5f);
+        if (!_timerRestarted)
+        {
+            _timer.StartTimer();
+        }
     }
 
     private void HandleDrag()

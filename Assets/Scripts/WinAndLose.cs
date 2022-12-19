@@ -7,6 +7,14 @@ public class WinAndLose : MonoBehaviour
 {
     [SerializeField] private Leaderboard _leaderboard;
     [SerializeField] private Stopwatch _stopwatch;
+    [SerializeField] private GameObject _leaderBoardImage;
+
+    private bool _gameWon;
+
+    private void Update()
+    {
+        if(_gameWon && Input.GetKeyDown(KeyCode.Escape)) StartCoroutine(RestartGame());
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -22,7 +30,9 @@ public class WinAndLose : MonoBehaviour
         _stopwatch.StopStopwatch();
         int score = Mathf.RoundToInt(_stopwatch.GetCurrentTime() * 1000f);
         StartCoroutine(SubmitScore(score));
-        StartCoroutine(RestartGame());
+        _leaderBoardImage.gameObject.SetActive(true);
+        Time.timeScale = 0f;
+        _gameWon = true;
     }
 
     public void LoseGame()

@@ -5,9 +5,16 @@ using LootLocker.Requests;
 
 public class PlayerManager : MonoBehaviour
 {
+    [SerializeField] private Leaderboard _leaderboard;
     private void Start()
     {
-        StartCoroutine(LoginRoutine());
+        StartCoroutine(SetupRoutine());
+    }
+
+    IEnumerator SetupRoutine()
+    {
+        yield return LoginRoutine();
+        yield return _leaderboard.FetchTopHighScoresRoutine();
     }
 
     IEnumerator LoginRoutine()

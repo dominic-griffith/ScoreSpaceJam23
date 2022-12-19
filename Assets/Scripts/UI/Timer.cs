@@ -48,6 +48,7 @@ public class Timer : MonoBehaviour
         _snowParticles.gameObject.SetActive(false);
         _blizzardParticles.gameObject.SetActive(true);
         _currentTimeText.gameObject.SetActive(true);
+        if (!AudioManager.GetInstance().IsPlaying("Heavy Snow")) AudioManager.GetInstance().Play("Heavy Snow");
         _timerActive = true;
     }
 
@@ -57,6 +58,7 @@ public class Timer : MonoBehaviour
         _blizzardParticles.gameObject.SetActive(false);
         _snowParticles.gameObject.SetActive(true);
         _currentTimeText.gameObject.SetActive(false);
+        AudioManager.GetInstance().Stop("Heavy Snow");
         _timerActive = false;
     }
 

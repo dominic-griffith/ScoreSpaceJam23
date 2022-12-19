@@ -49,7 +49,7 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
-        //Play("Music");
+        Play("Light Snow");
     }
 
     public static AudioManager GetInstance()
@@ -79,6 +79,13 @@ public class AudioManager : MonoBehaviour
         Sound s = FindSound(name);
         if(s == null) return;
         s.Source.Pause();
+    }
+
+    public bool IsPlaying(string name)
+    {
+        Sound s = FindSound(name);
+        if (s == null) return false;
+        return s.Source.isPlaying;
     }
 
     private Sound FindSound(string name) {

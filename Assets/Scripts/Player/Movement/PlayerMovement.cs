@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Ground Check")]
     [SerializeField] private float _playerHeight = 2f;
     [SerializeField] LayerMask _groundMask;
+    [SerializeField] LayerMask _nonGroundMask;
     [Header("Jump Check")]
     [SerializeField] private float _jumpForce = 12f;
     [SerializeField] private float _jumpCooldown = 0.25f;
@@ -25,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _maxSlopeAngle = 45f;
     [Header("Swinging")]
     [SerializeField] private LineRenderer _lr;
-    [SerializeField] private Transform _gunTip, _cam, _player, _predictionPoint;
+    [SerializeField] private Transform _gunTip, _cam, _player, _predictionPoint, _camHook;
     [SerializeField] private LayerMask _swingMask;
     [SerializeField] private float _maxSwingDistance = 25f;
     [SerializeField] private float _swingSpeed = 15f;
@@ -47,6 +48,7 @@ public class PlayerMovement : MonoBehaviour
     private SpringJoint _joint;
     private Rigidbody _rb;
     private bool _isGrounded;
+    private bool _isNotGround;
     private bool _canJump;
     private bool _sprinting;
     private bool _jumping;
@@ -69,6 +71,7 @@ public class PlayerMovement : MonoBehaviour
         _rb.freezeRotation = true;
         _canJump = true;
         _startYScale = transform.localScale.y;
+        _swingMask = _groundMask;
     }
 
     private void Update()
@@ -95,6 +98,7 @@ public class PlayerMovement : MonoBehaviour
     private void GroundCheck()
     {
         _isGrounded = Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.2f, _groundMask);
+        _isNotGround = Physics.Raycast(transform.position, Vector3.down, _playerHeight * 0.5f + 0.2f, _nonGroundMask);
     }
 
     private void HandleDrag()
@@ -142,7 +146,7 @@ public class PlayerMovement : MonoBehaviour
 
         _moveDirection = _orientation.forward * _verticalInput + _orientation.right * _horizontalInput;
 
-        if(OnSlope() && !_exitSlope)
+        if(OnSlope() && !_exitSlope && _isGrounded)
         {
             _rb.AddForce(GetSlopeMoveDirection() * _moveSpeed * 20f, ForceMode.Force);
             if (_rb.velocity.y > 0)
@@ -150,6 +154,7 @@ public class PlayerMovement : MonoBehaviour
         } 
         else if(_isGrounded)
             _rb.AddForce(_moveDirection.normalized * _moveSpeed * 10f, ForceMode.Force);
+        else if (_isNotGround) { }
         else
             _rb.AddForce(_moveDirection.normalized * _moveSpeed * 10f * _airMultiplier, ForceMode.Force);
 
@@ -171,7 +176,6 @@ public class PlayerMovement : MonoBehaviour
                 Vector3 limitedVelocity = flatVelocity.normalized * _moveSpeed;
                 _rb.velocity = new Vector3(limitedVelocity.x, _rb.velocity.y, limitedVelocity.z);
             }
-            Debug.Log(flatVelocity.magnitude);
         }
         
         
@@ -239,6 +243,7 @@ public class PlayerMovement : MonoBehaviour
         if (_predictionHit.point == Vector3.zero) return;
 
         _swinging = true;
+        _camHook.gameObject.SetActive(false);
 
         _swingPoint = _predictionHit.point;
         _joint = _player.gameObject.AddComponent<SpringJoint>();
@@ -316,6 +321,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
+            _camHook.gameObject.SetActive(true);
             _predictionPoint.gameObject.SetActive(false);
         }
 

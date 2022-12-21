@@ -12,7 +12,7 @@ public class Stopwatch : MonoBehaviour
     private float _currentTime;
     private bool _stopwatchActive;
 
-    private void Start()
+    public void Start()
     {
         _currentTime = 0f;
         StartStopwatch();

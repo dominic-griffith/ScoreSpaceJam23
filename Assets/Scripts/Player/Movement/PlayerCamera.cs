@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerCamera : MonoBehaviour
 {
     [SerializeField] private Transform _orientation;
+    [SerializeField] private PlayerManager _pm;
     [SerializeField] private float _mouseSensitivity = 500f;
     [SerializeField] private float _clampAngle = 90f;
 
@@ -13,14 +14,9 @@ public class PlayerCamera : MonoBehaviour
     private float _mouseX;
     private float _mouseY;
 
-    private void Start()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
     private void Update()
     {
+        if (!_pm.NameReady()) return;
         GetInput();
         UpdateCamera();
     }

@@ -6,7 +6,7 @@ using TMPro;
 
 public class Leaderboard : MonoBehaviour
 {
-    [SerializeField] private string _leaderboardID = "9831";
+    [SerializeField] private string _leaderboardID = "9874";
     [SerializeField] private TextMeshProUGUI _playerNames;
     [SerializeField] private TextMeshProUGUI _playerScores;
     [SerializeField] private int _numberScores = 15;

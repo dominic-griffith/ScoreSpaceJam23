@@ -30,6 +30,7 @@ public class WinAndLose : MonoBehaviour
         _stopwatch.StopStopwatch();
         int score = Mathf.RoundToInt(_stopwatch.GetCurrentTime() * 1000f);
         StartCoroutine(SubmitScore(score));
+        _leaderboard.FetchTopHighScoresRoutine();
         _leaderBoardImage.gameObject.SetActive(true);
         Time.timeScale = 0f;
         _gameWon = true;

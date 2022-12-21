@@ -7,6 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public MovementState State;
 
     [Header("Movement")]
+    [SerializeField] private PlayerManager _pm;
     [SerializeField] private Transform _orientation;
     [SerializeField] private float _walkSpeed = 7f;
     [SerializeField] private float _walkAudioStepSpeed = 0.5f;
@@ -81,6 +82,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (!_pm.NameReady()) return;
         GroundCheck();
         GetInput();
         CheckForSwingPoints();

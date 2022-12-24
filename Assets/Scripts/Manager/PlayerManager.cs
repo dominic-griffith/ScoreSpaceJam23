@@ -10,14 +10,16 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private TMP_InputField _playerNameInput;
     [SerializeField] private GameObject _camGrapple;
     [SerializeField] private GameObject _stopwatch;
+    [SerializeField] private GameObject _titleScreen;
     [SerializeField] private Stopwatch _actualStopWatch;
 
     private bool _nameEntered;
 
     private void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         StartCoroutine(SetupRoutine());
-        
     }
 
     public void SetPlayerName()
@@ -37,6 +39,7 @@ public class PlayerManager : MonoBehaviour
         _playerNameInput.gameObject.SetActive(false);
         _camGrapple.gameObject.SetActive(true);
         _stopwatch.gameObject.SetActive(true);
+        _titleScreen.gameObject.SetActive(false);
         _actualStopWatch.Start();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -51,32 +54,32 @@ public class PlayerManager : MonoBehaviour
     {
         yield return LoginRoutine();
         yield return _leaderboard.FetchTopHighScoresRoutine();
-        yield return CheckIfNameEntered();
+        //yield return CheckIfNameEntered();
     }
 
     
-    IEnumerator CheckIfNameEntered()
-    {
-        bool done = false;
-        LootLockerSDKManager.GetPlayerName((response) =>
-        {
-            if (response.success)
-            {
-                _nameEntered = true;
-                _playerNameInput.gameObject.SetActive(false);
-                _camGrapple.gameObject.SetActive(true);
-                _stopwatch.gameObject.SetActive(true);
-                _actualStopWatch.Start();
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-                done = true;
-            }
-            else {
-                done = true;
-            }
-        });
-        yield return new WaitWhile(() => done == false);
-    }
+    //IEnumerator CheckIfNameEntered()
+    //{
+    //    bool done = false;
+    //    LootLockerSDKManager.GetPlayerName((response) =>
+    //    {
+    //        if (response.success)
+    //        {
+    //            _nameEntered = true;
+    //            _playerNameInput.gameObject.SetActive(false);
+    //            _camGrapple.gameObject.SetActive(true);
+    //            _stopwatch.gameObject.SetActive(true);
+    //            _actualStopWatch.Start();
+    //            Cursor.lockState = CursorLockMode.Locked;
+    //            Cursor.visible = false;
+    //            done = true;
+    //        }
+    //        else {
+    //            done = true;
+    //        }
+    //    });
+    //    yield return new WaitWhile(() => done == false);
+    //}
     
 
     IEnumerator LoginRoutine()

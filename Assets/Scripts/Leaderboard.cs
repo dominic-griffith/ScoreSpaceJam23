@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using LootLocker.Requests;
 using TMPro;
+using System;
 
 public class Leaderboard : MonoBehaviour
 {
     [SerializeField] private string _leaderboardID = "9874";
     [SerializeField] private TextMeshProUGUI _playerNames;
     [SerializeField] private TextMeshProUGUI _playerScores;
-    [SerializeField] private int _numberScores = 15;
+    [SerializeField] private int _numberScores = 20;
 
 
     public IEnumerator SubmitScoreRoutine(int scoreToUpload)
@@ -39,8 +40,8 @@ public class Leaderboard : MonoBehaviour
         {
             if (response.success)
             {
-                string tempPlayerNames = "Names\n";
-                string tempPlayerScores = "Scores\n";
+                string tempPlayerNames = "";
+                string tempPlayerScores = "";
 
                 LootLockerLeaderboardMember[] members = response.items;
 
@@ -55,7 +56,7 @@ public class Leaderboard : MonoBehaviour
                     {
                         tempPlayerNames += members[i].player.id;
                     }
-                    tempPlayerScores += members[i].score + "\n";
+                    tempPlayerScores += FormatScores(members[i].score) + "\n";
                     tempPlayerNames += "\n";
                 }
                 done = true;
@@ -69,5 +70,12 @@ public class Leaderboard : MonoBehaviour
             }
         });
         yield return new WaitWhile(() => done == false);
+    }
+
+    private string FormatScores(int score)
+    {
+        float timeScore = score;
+        TimeSpan time = TimeSpan.FromSeconds(timeScore/1000f);
+        return time.ToString(@"mm\:ss\:fff");
     }
 }
